@@ -6,7 +6,8 @@ memory (de)allocations for a thread. If a (de)allocation is attempted
 anyway, the program will panic.
 
 It uses thread local storage for the "disabled-flag/counter", and thus
-should be thread safe.
+should be thread safe, if the underlying allocator (currently hard-coded
+to `std::alloc::System`) is.
 
 How to use
 ----------
