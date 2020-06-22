@@ -1,7 +1,7 @@
 assert_no_alloc
 ===============
 
-This crate provides a custom allocator that allow to temporarily disable
+This crate provides a custom allocator that allows to temporarily disable
 memory (de)allocations for a thread. If a (de)allocation is attempted
 anyway, the program will panic.
 
@@ -10,7 +10,7 @@ How to use
 
 First, use the allocator provided by this crate. Add this to `main.rs`:
 
-```
+```rust
 use assert_no_alloc::*;
 
 #[global_allocator]
@@ -19,7 +19,7 @@ static A: AllocDisabler = AllocDisabler;
 
 Second, wrap code sections that may not allocate like this:
 
-```
+```rust
 assert_no_alloc(|| {
 	println!("This code can not allocate.");
 });
@@ -32,7 +32,7 @@ Advanced use
 
 Values can be returned using:
 
-```
+```rust
 let answer = assert_no_alloc(|| { 42 });
 ```
 
@@ -46,7 +46,7 @@ Limitations
 Note that calling `panic!()` itself can allocate memory. This can cause panics
 while panicking, an error considered fatal by rust. This crate prevents this
 from happening on its own panic by temporarily allowing allocations before
-calling `panic!()`. On foreign panics, however, this is not ensured. See
+calling `panic!()`. On foreign panics, however, this is not ensured.
 See [here](examples/limitation_panic_while_forbidden.rs) for an example of this
 happening or run `cargo run --example limitation_panic_while_forbidden`.
 
