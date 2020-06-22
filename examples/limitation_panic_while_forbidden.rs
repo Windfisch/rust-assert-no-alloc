@@ -4,7 +4,7 @@ use assert_no_alloc::*;
 static A: AllocDisabler = AllocDisabler;
 
 fn main() {
-	forbid_alloc(|| {
+	assert_no_alloc(|| {
 		panic!("unrelated panic");
 	});
 }

@@ -8,7 +8,7 @@ thread_local! {
 
 pub struct AllocDisabler;
 
-pub fn forbid_alloc<T, F: FnOnce() -> T> (func: F) -> T {
+pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 	// RAII guard for managing the forbid counter. This is to ensure correct behaviour
 	// when catch_unwind is used
 	struct Guard;

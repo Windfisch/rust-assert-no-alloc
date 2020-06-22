@@ -10,7 +10,7 @@ fn main() {
 
 	println!();
 
-	let fib5 = forbid_alloc(|| {
+	let fib5 = assert_no_alloc(|| {
 		println!("Alloc is forbidden. Let's calculate something without memory allocations...");
 
 		fn fib(n: u32) -> u32 {
@@ -23,7 +23,7 @@ fn main() {
 	println!("\tSuccess, the 5th fibonacci number is {}", fib5);
 	println!();
 
-	forbid_alloc(|| {
+	assert_no_alloc(|| {
 		println!("Alloc is forbidden. Let's allocate some memory...");
 		let mut vec_cannot_push = Vec::new();
 		vec_cannot_push.push(42); // panics

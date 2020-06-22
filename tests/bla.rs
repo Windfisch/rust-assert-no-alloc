@@ -15,7 +15,7 @@ fn test_ok_noop() {
 
 #[test]
 fn test_ok_simple() {
-	forbid_alloc(|| {
+	assert_no_alloc(|| {
 	});
 
 	do_alloc();
@@ -23,8 +23,8 @@ fn test_ok_simple() {
 
 #[test]
 fn test_ok_nested() {
-	forbid_alloc(|| {
-		forbid_alloc(|| {
+	assert_no_alloc(|| {
+		assert_no_alloc(|| {
 		});
 	});
 
@@ -34,7 +34,7 @@ fn test_ok_nested() {
 #[test]
 #[should_panic(expected = "Tried to (de)allocate memory in a thread forbids allocator calls!")]
 fn test_forbidden_simple() {
-	forbid_alloc(|| {
+	assert_no_alloc(|| {
 		do_alloc();
 	});
 }
@@ -42,8 +42,8 @@ fn test_forbidden_simple() {
 #[test]
 #[should_panic(expected = "Tried to (de)allocate memory in a thread forbids allocator calls!")]
 fn test_forbidden_in_nested() {
-	forbid_alloc(|| {
-		forbid_alloc(|| {
+	assert_no_alloc(|| {
+		assert_no_alloc(|| {
 			do_alloc();
 		});
 	});
@@ -52,8 +52,8 @@ fn test_forbidden_in_nested() {
 #[test]
 #[should_panic(expected = "Tried to (de)allocate memory in a thread forbids allocator calls!")]
 fn test_forbidden_after_nested() {
-	forbid_alloc(|| {
-		forbid_alloc(|| {
+	assert_no_alloc(|| {
+		assert_no_alloc(|| {
 		});
 		do_alloc();
 	});
@@ -62,7 +62,7 @@ fn test_forbidden_after_nested() {
 #[test]
 fn test_ok_after_unwind() {
 	let result = catch_unwind(|| {
-		forbid_alloc(|| {
+		assert_no_alloc(|| {
 			do_alloc();
 		});
 	});
@@ -76,14 +76,14 @@ fn test_ok_after_unwind() {
 #[should_panic(expected = "Tried to (de)allocate memory in a thread forbids allocator calls!")]
 fn test_forbidden_after_unwind() {
 	let result = catch_unwind(|| {
-		forbid_alloc(|| {
+		assert_no_alloc(|| {
 			do_alloc();
 		});
 	});
 
 	assert!(result.is_err());
 
-	forbid_alloc(|| {
+	assert_no_alloc(|| {
 		do_alloc();
 	});
 }

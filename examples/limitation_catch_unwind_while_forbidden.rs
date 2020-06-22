@@ -9,9 +9,9 @@ fn do_alloc() {
 }
 
 fn main() {
-	let result = forbid_alloc(|| {
+	let result = assert_no_alloc(|| {
 		catch_unwind(|| {
-			forbid_alloc(|| {
+			assert_no_alloc(|| {
 				do_alloc();
 			});
 		})
