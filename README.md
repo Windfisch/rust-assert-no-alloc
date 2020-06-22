@@ -5,6 +5,9 @@ This crate provides a custom allocator that allows to temporarily disable
 memory (de)allocations for a thread. If a (de)allocation is attempted
 anyway, the program will panic.
 
+It uses thread local storage for the "disabled-flag/counter", and thus
+should be thread safe.
+
 How to use
 ----------
 
@@ -56,3 +59,5 @@ occurs. See [here](examples/limitation_catch_unwind_while_forbidden.rs) or run
 
 Both issues seem to cause undefined behaviour, terminating the programs with
 `Illegal instruction` (`SIGILL`).
+
+The test suite does not check whether this is actually thread-safe.
