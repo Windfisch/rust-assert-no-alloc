@@ -63,32 +63,11 @@ pub fn reset_violation_count() {
 
 impl AllocDisabler {
 	fn check(&self) {
-		// RAII guard for managing the forbid counter. This is to ensure correct behaviour
-		// when catch_unwind is used
-		struct Guard(u32);
-		impl Guard {
-			fn new() -> Guard {
-				let old = ALLOC_FORBID_COUNT.with(|c| c.get());
-				ALLOC_FORBID_COUNT.with(|c| c.set(0));
-				Guard(old)
-			}
-		}
-		impl Drop for Guard {
-			fn drop(&mut self) {
-				ALLOC_FORBID_COUNT.with(|c| c.set(self.0));
-			}
-		}
-
 		let forbid_count = ALLOC_FORBID_COUNT.with(|f| f.get());
 		if forbid_count > 0 {
-			//ALLOC_FORBID_COUNT.with(|c| *c.borrow_mut() = 0); // avoid panics in the panic handler
-			let _guard = Guard::new(); // set the forbid count to zero temporarily to avoid panics in the panic handler
-			println!("Tried to (de)allocate memory in a thread forbids allocator calls!");
+			//println!("Tried to (de)allocate memory in a thread forbids allocator calls!");
 			ALLOC_VIOLATION_COUNT.with(|c| c.set(c.get()+1));
 			//std::alloc::handle_alloc_error(layout);
-			// if this panic is caught, then at some point guard.drop() will be called, which re-sets the forbid count to its actual state.
-			// also, the guards in forbid_alloc() will correctly manage the pointer, so that after the counter should still have the correct
-			// value after unwinding.
 		}
 	}
 }
