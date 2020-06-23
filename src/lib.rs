@@ -22,10 +22,10 @@
  */
 
 use std::alloc::{System,GlobalAlloc,Layout};
-use std::cell::RefCell;
+use std::cell::Cell;
 
 thread_local! {
-	static ALLOC_FORBID_COUNT: RefCell<u32> = RefCell::new(0);
+	static ALLOC_FORBID_COUNT: Cell<u32> = Cell::new(0);
 }
 
 pub struct AllocDisabler;
@@ -36,13 +36,13 @@ pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 	struct Guard;
 	impl Guard {
 		fn new() -> Guard {
-			ALLOC_FORBID_COUNT.with(|c| *c.borrow_mut() += 1);
+			ALLOC_FORBID_COUNT.with(|c| c.set(c.get()+1));
 			Guard
 		}
 	}
 	impl Drop for Guard {
 		fn drop(&mut self) {
-			ALLOC_FORBID_COUNT.with(|c| *c.borrow_mut() -= 1);
+			ALLOC_FORBID_COUNT.with(|c| c.set(c.get()-1));
 		}
 	}
 
@@ -59,18 +59,18 @@ impl AllocDisabler {
 		struct Guard(u32);
 		impl Guard {
 			fn new() -> Guard {
-				let old = ALLOC_FORBID_COUNT.with(|c| *c.borrow());
-				ALLOC_FORBID_COUNT.with(|c| *c.borrow_mut() = 0);
+				let old = ALLOC_FORBID_COUNT.with(|c| c.get());
+				ALLOC_FORBID_COUNT.with(|c| c.set(0));
 				Guard(old)
 			}
 		}
 		impl Drop for Guard {
 			fn drop(&mut self) {
-				ALLOC_FORBID_COUNT.with(|c| *c.borrow_mut() = self.0);
+				ALLOC_FORBID_COUNT.with(|c| c.set(self.0));
 			}
 		}
 
-		let forbid_count = ALLOC_FORBID_COUNT.with(|f| *f.borrow());
+		let forbid_count = ALLOC_FORBID_COUNT.with(|f| f.get());
 		if forbid_count > 0 {
 			//ALLOC_FORBID_COUNT.with(|c| *c.borrow_mut() = 0); // avoid panics in the panic handler
 			let _guard = Guard::new(); // set the forbid count to zero temporarily to avoid panics in the panic handler
