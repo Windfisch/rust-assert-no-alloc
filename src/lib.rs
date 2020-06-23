@@ -26,6 +26,7 @@ use std::cell::Cell;
 
 thread_local! {
 	static ALLOC_FORBID_COUNT: Cell<u32> = Cell::new(0);
+	static ALLOC_VIOLATION_COUNT: Cell<u32> = Cell::new(0);
 }
 
 pub struct AllocDisabler;
@@ -52,6 +53,14 @@ pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 	return ret;
 }
 
+pub fn violation_count() -> u32 {
+	ALLOC_VIOLATION_COUNT.with(|c| c.get())
+}
+
+pub fn reset_violation_count() {
+	ALLOC_VIOLATION_COUNT.with(|c| c.set(0));
+}
+
 impl AllocDisabler {
 	fn check(&self) {
 		// RAII guard for managing the forbid counter. This is to ensure correct behaviour
@@ -74,7 +83,9 @@ impl AllocDisabler {
 		if forbid_count > 0 {
 			//ALLOC_FORBID_COUNT.with(|c| *c.borrow_mut() = 0); // avoid panics in the panic handler
 			let _guard = Guard::new(); // set the forbid count to zero temporarily to avoid panics in the panic handler
-			panic!("Tried to (de)allocate memory in a thread forbids allocator calls!");
+			println!("Tried to (de)allocate memory in a thread forbids allocator calls!");
+			ALLOC_VIOLATION_COUNT.with(|c| c.set(c.get()+1));
+			//std::alloc::handle_alloc_error(layout);
 			// if this panic is caught, then at some point guard.drop() will be called, which re-sets the forbid count to its actual state.
 			// also, the guards in forbid_alloc() will correctly manage the pointer, so that after the counter should still have the correct
 			// value after unwinding.
