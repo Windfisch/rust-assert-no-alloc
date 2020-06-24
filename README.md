@@ -23,7 +23,7 @@ allocation/deallocation is a common thing to do and most libraries are not
 explicit whether certain functions can allocate or not. Also, this might
 even depend on the run-time situation (e.g. a `Vec::push` might allocate,
 but it is guaranteed to not allocate *if* enough space has been `reserve()`d
-before.
+before).
 
 To aid the developer in tackling these problems, this crate offers an easy
 way of detecting all forbidden allocations.
