@@ -4,11 +4,27 @@ use std::panic::catch_unwind;
 #[global_allocator]
 static A: AllocDisabler = AllocDisabler;
 
+#[cfg(not(feature = "warn_debug"))]
+compile_error!("The test suite requires the warn_debug feature to be enabled. Use `cargo test --features warn_debug`");
+
+// This is only a kludge; what we actually want to check is "will do_alloc() be optimized out?", e.g. due to
+// compiler optimizations turned on in --release mode. We can't do that, the closest we can get is to check
+// whether debug_assertions are disabled, which coincidentially also happens in release mode.
+#[cfg(not(debug_assertions))]
+compile_error!("The test suite only works in debug mode. Use `cargo test --features warn_debug`");
+
+#[cfg(feature = "warn_debug")]
 fn check_and_reset() -> bool {
 	let result = violation_count() > 0;
 	reset_violation_count();
 	result
 }
+
+// Provide a stub check_and_reset() function if warn_debug is disabled. This will never be compiled due to the
+// compile_error!() above, but this stub ensures that the output will not be cluttered with spurious error
+// messages.
+#[cfg(not(feature = "warn_debug"))]
+fn check_and_reset() -> bool { unreachable!() }
 
 fn do_alloc() {
 	let _tmp: Box<u32> = Box::new(42);
@@ -85,7 +101,7 @@ fn unwind_ok() {
 		});
 		assert!(r.is_err());
 	});
-	reset_violation_count(); // unwinding might have allocated memory; we don't care about that.
+	check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 	do_alloc();
 	assert_eq!(check_and_reset(), false);
 }
@@ -101,7 +117,7 @@ fn unwind_nested() {
 		});
 		assert!(r.is_err());
 		
-		reset_violation_count(); // unwinding might have allocated memory; we don't care about that.
+		check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 		do_alloc();
 		assert_eq!(check_and_reset(), true);
 	});
@@ -121,12 +137,12 @@ fn unwind_nested2() {
 		});
 		assert!(r.is_err());
 		
-		reset_violation_count(); // unwinding might have allocated memory; we don't care about that.
+		check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 		do_alloc();
 		assert_eq!(check_and_reset(), true);
 		});
 	});
-	reset_violation_count(); // unwinding might have allocated memory; we don't care about that.
+	check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 	do_alloc();
 	assert_eq!(check_and_reset(), false);
 }
