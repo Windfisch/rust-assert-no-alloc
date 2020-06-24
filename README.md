@@ -9,6 +9,25 @@ It uses thread local storage for the "disabled-flag/counter", and thus
 should be thread safe, if the underlying allocator (currently hard-coded
 to `std::alloc::System`) is.
 
+Rationale
+---------
+
+No-allocation-zones are relevant e.g. in real-time scenarios like audio
+callbacks. Allocation and deallocation can take unpredictable amounts of
+time, and thus can *sometimes* lead to audible glitches because the audio
+data is not served in time.
+
+Debugging such problems can be hard, because it is difficult to reproduce
+such problems consistently. Avoiding such problems is also hard, since
+allocation/deallocation is a common thing to do and most libraries are not
+explicit whether certain functions can allocate or not. Also, this might
+even depend on the run-time situation (e.g. a `Vec::push` might allocate,
+but it is guaranteed to not allocate *if* enough space has been `reserve()`d
+before.
+
+To aid the developer in tackling these problems, this crate offers an easy
+way of detecting all forbidden allocations.
+
 How to use
 ----------
 
