@@ -91,6 +91,7 @@ pub fn reset_violation_count() {
 
 
 
+#[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
 pub struct AllocDisabler;
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
@@ -109,11 +110,7 @@ impl AllocDisabler {
 	}
 }
 
-#[cfg(all(feature = "disable_release", not(debug_assertions)))] // if disabled
-impl AllocDisabler {
-	fn check(&self, _layout: Layout) {} // no-op
-}
-
+#[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
 unsafe impl GlobalAlloc for AllocDisabler {
 	unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
 		self.check(layout);

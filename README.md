@@ -46,7 +46,7 @@ Second, use the allocator provided by this crate. Add this to `main.rs`:
 ```rust
 use assert_no_alloc::*;
 
-#[cfg(debug_assertions)]
+#[cfg(debug_assertions)] // required when disable_release is set (default)
 #[global_allocator]
 static A: AllocDisabler = AllocDisabler;
 ```
