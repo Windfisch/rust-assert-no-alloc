@@ -1,5 +1,6 @@
 use assert_no_alloc::*;
 
+#[cfg(debug_assertions)]
 #[global_allocator]
 static A: AllocDisabler = AllocDisabler;
 

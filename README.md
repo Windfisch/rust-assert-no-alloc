@@ -46,6 +46,7 @@ Second, use the allocator provided by this crate. Add this to `main.rs`:
 ```rust
 use assert_no_alloc::*;
 
+#[cfg(debug_assertions)]
 #[global_allocator]
 static A: AllocDisabler = AllocDisabler;
 ```
@@ -67,9 +68,11 @@ Values can be returned using:
 let answer = assert_no_alloc(|| { 42 });
 ```
 
-`assert_no_alloc()` calls can be nested.
+`assert_no_alloc()` calls can be nested, with proper panic unwinding handling.
 
-The generated panic can be caught using `catch_unwind()`.
+Note that to fully bypass this crate, e.g. when in release mode, you need to
+*both* have the `disable_release` feature flag enabled (which it is by default)
+and to not register `AllocDisabler` as `global_allocator`.
 
 Examples
 --------
