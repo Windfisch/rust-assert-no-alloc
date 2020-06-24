@@ -78,7 +78,7 @@ See [examples/main.rs](examples/main.rs) for an example.
 
 You can try out the different feature flags:
 
-- `cargo run --example main` -> memory allocation of 4 bytes failed. Aborted (core dumped)a
+- `cargo run --example main` -> memory allocation of 4 bytes failed. Aborted (core dumped)
 - `cargo run --example main  --release --no-default-features` -> same as above.
 - `cargo run --example main --features=warn_debug` -> Tried to (de)allocate memory in a thread that forbids allocator calls! This will not be executed if the above allocation has aborted.
 - `cargo run --example main --features=warn_release --release --no-default-features` -> same as above.
