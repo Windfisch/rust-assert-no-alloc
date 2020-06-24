@@ -29,5 +29,5 @@ fn main() {
 		vec_cannot_push.push(42); // panics
 	});
 
-	println!("this will not be executed due to the panic above");
+	println!("This will not be executed if the above allocation has aborted.");
 }
