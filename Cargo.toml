@@ -3,6 +3,7 @@ name = "assert_no_alloc"
 version = "0.1.0"
 authors = ["Florian Jung <flo@windfis.ch>"]
 edition = "2018"
+license = "BSD-1-Clause"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
