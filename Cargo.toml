@@ -1,14 +1,21 @@
 [package]
 name = "assert_no_alloc"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Florian Jung <flo@windfis.ch>"]
 edition = "2018"
 license = "BSD-1-Clause"
+description = "Custom Rust allocator allowing to temporarily disable memory (de)allocations for a thread. Aborts or prints a warning if allocating although forbidden."
+homepage = "https://github.com/Windfisch/rust-assert-no-alloc"
+repository = "https://github.com/Windfisch/rust-assert-no-alloc"
+readme = "README.md"
+keywords = ["allocator", "real-time", "debug", "audio"]
+categories = ["development-tools::debugging"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-
 default = ["disable_release"]
 warn_debug = []
 warn_release = []
 disable_release = []
+
+[package.metadata.docs.rs]
+features = ["warn_debug"]

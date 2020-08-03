@@ -77,7 +77,7 @@ and to not register `AllocDisabler` as `global_allocator`.
 Examples
 --------
 
-See [examples/main.rs](examples/main.rs) for an example.
+See [examples/main.rs](https://github.com/Windfisch/rust-assert-no-alloc/blob/master/examples/main.rs) for an example.
 
 You can try out the different feature flags:
 

@@ -21,6 +21,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#![feature(external_doc)]
+#![doc(include = "../README.md")]
+
 use std::alloc::{System,GlobalAlloc,Layout};
 use std::cell::Cell;
 
@@ -43,6 +46,12 @@ pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T { // no-op
 }
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
+/// Calls the `func` closure, but forbids any (de)allocations.
+///
+/// If a call to the allocator is made, the program will abort with an error,
+/// print a warning (depending on the `warn_debug` feature flag. Or ignore
+/// the situation, when compiled in `--release` mode with the `disable_release`
+///feature flag set (which is the default)).
 pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 	// RAII guard for managing the forbid counter. This is to ensure correct behaviour
 	// when catch_unwind is used
@@ -79,11 +88,17 @@ pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 }
 
 #[cfg(any( all(feature="warn_debug", debug_assertions), all(feature="warn_release", not(debug_assertions)) ))] // if warn mode is selected
+/// Returns the count of allocation warnings emitted so far.
+///
+/// Only available when the `warn_debug` or `warn release` features are enabled.
 pub fn violation_count() -> u32 {
 	ALLOC_VIOLATION_COUNT.with(|c| c.get())
 }
 
 #[cfg(any( all(feature="warn_debug", debug_assertions), all(feature="warn_release", not(debug_assertions)) ))] // if warn mode is selected
+/// Resets the count of allocation warnings to zero.
+///
+/// Only available when the `warn_debug` or `warn release` features are enabled.
 pub fn reset_violation_count() {
 	ALLOC_VIOLATION_COUNT.with(|c| c.set(0));
 }
@@ -92,6 +107,16 @@ pub fn reset_violation_count() {
 
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
+/// The custom allocator that handles the checking.
+///
+/// To use this crate, you must add the following in your `main.rs`:
+/// ```rust
+/// use assert_no_alloc::*;
+/// // ...
+/// #[cfg(debug_assertions)]
+/// #[global_allocator]
+/// static A: AllocDisabler = AllocDisabler;
+/// ```
 pub struct AllocDisabler;
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
@@ -122,5 +147,3 @@ unsafe impl GlobalAlloc for AllocDisabler {
 		System.dealloc(ptr, layout)
 	}
 }
-
-
