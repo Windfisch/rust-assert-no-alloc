@@ -9,6 +9,9 @@ It uses thread local storage for the "disabled-flag/counter", and thus
 should be thread safe, if the underlying allocator (currently hard-coded
 to `std::alloc::System`) is.
 
+[documentation @ docs.rs](https://docs.rs/assert_no_alloc/1.0.0/assert_no_alloc/),
+[crates.io](https://crates.io/crates/assert_no_alloc)
+
 Rationale
 ---------
 
