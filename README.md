@@ -121,5 +121,5 @@ Test suite
 The tests will fail to compile with the default features. Run them using:
 
 ```
-cargo test --features=warn_debug
+cargo test --features=warn_debug --tests
 ```
