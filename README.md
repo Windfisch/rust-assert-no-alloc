@@ -9,7 +9,7 @@ It uses thread local storage for the "disabled-flag/counter", and thus
 should be thread safe, if the underlying allocator (currently hard-coded
 to `std::alloc::System`) is.
 
-[documentation @ docs.rs](https://docs.rs/assert_no_alloc/1.0.0/assert_no_alloc/),
+[documentation @ docs.rs](https://docs.rs/assert_no_alloc/1.1.0/assert_no_alloc/),
 [crates.io](https://crates.io/crates/assert_no_alloc)
 
 Rationale
@@ -70,6 +70,31 @@ Values can be returned using:
 ```rust
 let answer = assert_no_alloc(|| { 42 });
 ```
+
+The effect of `assert_no_alloc` can be overridden using `permit_alloc`:
+
+```rust
+assert_no_alloc(|| {
+	permit_alloc(|| {
+		// Allocate some memory here. This will work.
+	});
+});
+```
+
+This is useful for test stubs whose code is executed in an `assert_no_alloc`
+context.
+
+Objects that deallocate upon `Drop` can be wrapped in `PermitDrop`:
+
+```rust
+let foo = PermitDrop::new(
+    permit_alloc(||
+        Box::new(...)
+    )
+);
+```
+
+Dropping `foo` will not trigger an assertion (but dropping a `Box` would).
 
 `assert_no_alloc()` calls can be nested, with proper panic unwinding handling.
 
