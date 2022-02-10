@@ -25,6 +25,7 @@
 
 use std::alloc::{System,GlobalAlloc,Layout};
 use std::cell::Cell;
+use std::panic;
 
 // check for mutually exclusive features.
 #[cfg(all(feature = "disable_release", feature = "warn_release"))]
@@ -48,6 +49,21 @@ pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T { // no-op
 #[cfg(all(feature = "disable_release", not(debug_assertions)))] // if disabled
 pub fn permit_alloc<T, F: FnOnce() -> T> (func: F) -> T { // no-op
 	func()
+}
+
+#[cfg(all(feature = "disable_release", not(debug_assertions)))] // if disabled
+pub fn permit_alloc_in_panic_hook() {}
+
+#[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
+/// Call this function once at the start of your application, otherwise you
+/// will not be able to get backtraces from panics by setting `RUST_BACKTRACE`.
+pub fn permit_alloc_in_panic_hook() {
+	let current_panic_hook = panic::take_hook();
+	panic::set_hook(Box::new(move |panic_info| {
+		permit_alloc(|| {
+			current_panic_hook(panic_info);
+		});
+	}));
 }
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled

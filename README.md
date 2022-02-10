@@ -54,7 +54,17 @@ use assert_no_alloc::*;
 static A: AllocDisabler = AllocDisabler;
 ```
 
-Third, wrap code sections that may not allocate like this:
+Third, call the `permit_alloc_in_panic_hook` function at the start of your
+program. This is required to be able to get backtraces from panics by
+setting the `RUST_BACKTRACE` environment variable.
+
+```rust
+fn main() {
+	permit_alloc_in_panic_hook();
+}
+```
+
+Now wrap code sections that may not allocate like this:
 
 ```rust
 assert_no_alloc(|| {
