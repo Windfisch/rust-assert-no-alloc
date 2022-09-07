@@ -159,8 +159,13 @@ impl AllocDisabler {
 
 			#[cfg(any( all(not(feature="warn_debug"), debug_assertions), all(not(feature="warn_release"), not(debug_assertions)) ))] // if abort mode is selected
 			{
-				#[cfg(feature = "log")]
+				#[cfg(all(feature = "log", feature = "backtrace"))]
+				permit_alloc(|| log::error!("Memory allocation of {} bytes failed from:\n{:?}", layout.size(), backtrace::Backtrace::new()));
+				#[cfg(all(feature = "log", not(feature = "backtrace")))]
 				permit_alloc(|| log::error!("Memory allocation of {} bytes failed", layout.size()));
+
+				#[cfg(all(not(feature = "log"), feature = "backtrace"))]
+				permit_alloc(|| eprintln!("Allocation failure from:\n{:?}", backtrace::Backtrace::new()));
 
 				// This handler can be overridden (although as of writing, the API to do so is still
 				// unstable) so we must always call this even when the log feature is enabled
