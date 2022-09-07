@@ -160,7 +160,12 @@ impl AllocDisabler {
 			ALLOC_VIOLATION_COUNT.with(|c| c.set(c.get()+1));
 
 			#[cfg(any( all(not(feature="warn_debug"), debug_assertions), all(not(feature="warn_release"), not(debug_assertions)) ))] // if abort mode is selected
-			std::alloc::handle_alloc_error(_layout);
+			{
+				#[cfg(feature = "backtrace")]
+				permit_alloc(|| eprintln!("Allocation failure from:\n{:?}", backtrace::Backtrace::new()));
+
+				std::alloc::handle_alloc_error(_layout);
+			}
 		}
 	}
 }
