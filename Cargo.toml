@@ -17,5 +17,13 @@ warn_debug = []
 warn_release = []
 disable_release = []
 
+# Use the `log` crate instead of printing to STDERR
+# WARNING: If the allocation failure happens during a logger call, then
+#          depending on the logger's implementation this may block indefinitely
+log = ["dep:log"]
+
+[dependencies]
+log = { version = "0.4", optional = true }
+
 [package.metadata.docs.rs]
 features = ["warn_debug"]
