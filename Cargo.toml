@@ -17,10 +17,16 @@ warn_debug = []
 warn_release = []
 disable_release = []
 
+# Use the `log` crate instead of printing to STDERR
+# WARNING: If the allocation failure happens during a logger call, then
+#          depending on the logger's implementation this may block indefinitely
+log = ["dep:log"]
+
 # Print a backtrace before aborting the program when an allocation failure happens
 backtrace = ["dep:backtrace"]
 
 [dependencies]
+log = { version = "0.4", optional = true }
 backtrace = { version = "0.3", optional = true }
 
 [package.metadata.docs.rs]
