@@ -17,5 +17,11 @@ warn_debug = []
 warn_release = []
 disable_release = []
 
+# Print a backtrace before aborting the program when an allocation failure happens
+backtrace = ["dep:backtrace"]
+
+[dependencies]
+backtrace = { version = "0.3", optional = true }
+
 [package.metadata.docs.rs]
 features = ["warn_debug"]
