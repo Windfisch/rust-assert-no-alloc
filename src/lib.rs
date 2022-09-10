@@ -162,6 +162,9 @@ impl AllocDisabler {
 				#[cfg(feature = "log")]
 				permit_alloc(|| log::error!("Memory allocation of {} bytes failed", layout.size()));
 
+        #[cfg(feature = "backtrace")]
+				permit_alloc(|| eprintln!("Allocation failure from:\n{:?}", backtrace::Backtrace::new()));
+
 				// This handler can be overridden (although as of writing, the API to do so is still
 				// unstable) so we must always call this even when the log feature is enabled
 				std::alloc::handle_alloc_error(layout);
