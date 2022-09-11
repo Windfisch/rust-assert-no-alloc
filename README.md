@@ -102,6 +102,24 @@ Note that to fully bypass this crate, e.g. when in release mode, you need to
 *both* have the `disable_release` feature flag enabled (which it is by default)
 and to not register `AllocDisabler` as `global_allocator`.
 
+Optional features
+-----------------
+
+These compile time features are not enabled by default:
+
+- `backtrace` causes a backtrace to be printed before the allocation failure.
+  This backtrace is gathered at runtime, and its accuracy depends on the
+  platform and the compilation options used.
+- `log` uses the `log` crate to write the allocation failure message to the
+  configured logger. If the `backtrace` feature is also enabled, then the
+  backtrace will also be written to the logger This can be useful when using a
+  logger that writes directly to a file or any other place that isn't STDERR.
+
+  The main caveat here is that if the allocation was caused by the logger and if
+  the logger wraps its entire log function in a regular non-entrant mutex, then
+  this may result in a deadlock. Make sure your logger doesn't do this before
+  enabling this feature.
+
 Examples
 --------
 
