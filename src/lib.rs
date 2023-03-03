@@ -153,7 +153,7 @@ impl AllocDisabler {
 	fn check(&self, layout: Layout) {
 		let forbid_count = ALLOC_FORBID_COUNT.with(|f| f.get());
 		let permit_count = ALLOC_PERMIT_COUNT.with(|p| p.get());
-		if forbid_count > 0 && permit_count == 0 {
+		if forbid_count > permit_count {
 			#[cfg(any( all(feature="warn_debug", debug_assertions), all(feature="warn_release", not(debug_assertions)) ))] // if warn mode is selected
 			ALLOC_VIOLATION_COUNT.with(|c| c.set(c.get()+1));
 
