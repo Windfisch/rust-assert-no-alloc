@@ -1,5 +1,5 @@
 use assert_no_alloc::*;
-use std::panic::catch_unwind;
+use std::{ops::Add, panic::catch_unwind};
 
 #[global_allocator]
 static A: AllocDisabler = AllocDisabler;
@@ -26,8 +26,8 @@ fn check_and_reset() -> bool {
 #[cfg(not(feature = "warn_debug"))]
 fn check_and_reset() -> bool { unreachable!() }
 
-fn do_alloc() {
-	let _tmp: Box<u32> = Box::new(42);
+fn do_alloc() -> Box<u32> {
+	Box::new(42)
 }
 
 #[test]
@@ -145,4 +145,105 @@ fn unwind_nested2() {
 	check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 	do_alloc();
 	assert_eq!(check_and_reset(), false);
+}
+
+#[test]
+fn test_permit_alloc() {
+	assert_eq!(check_and_reset(), false);
+	assert_no_alloc(|| {
+		permit_alloc(|| {
+			do_alloc();
+		})
+	});
+	assert_eq!(check_and_reset(), false);
+}
+
+#[test]
+fn test_drop() {
+	assert_eq!(check_and_reset(), false);
+	assert_no_alloc(|| {
+		let value = permit_alloc(|| do_alloc());
+		// implicit drop
+	});
+	assert_eq!(check_and_reset(), true);
+}
+
+#[test]
+fn test_permit_drop() {
+	assert_eq!(check_and_reset(), false);
+	assert_no_alloc(|| {
+		let value = PermitDrop::new(permit_alloc(|| do_alloc()));
+		// can call methods on wrapped value
+		assert_eq!(value.abs_diff(32), 10);
+
+		// implicit drop
+	});
+	assert_eq!(check_and_reset(), false);
+}
+
+#[test]
+fn test_permit_drop_alloc() {
+	struct S(Box<u32>);
+	impl S {
+		fn perform_alloc(&self) -> u32 {
+			do_alloc().add(*self.0)
+		}
+	}
+
+	assert_eq!(check_and_reset(), false);
+	assert_no_alloc(|| {
+		let value = PermitDrop::new(permit_alloc(|| S(do_alloc())));
+
+		// calling allocating methods should still be recognized even if value is wrapped in PermitDrop
+		value.perform_alloc();
+
+		// implicit drop
+	});
+	assert_eq!(check_and_reset(), true);
+}
+
+#[test]
+fn test_dealloc() {
+	struct S(Box<u32>);
+	impl S {
+		fn consume_self(self) {}
+	}
+
+	assert_eq!(check_and_reset(), false);
+	assert_no_alloc(|| {
+		let value = permit_alloc(|| S(do_alloc()));
+		// performs dealloc
+		value.consume_self();
+	});
+	assert_eq!(check_and_reset(), true);
+}
+
+#[test]
+fn test_permit_dealloc() {
+	struct S(Box<u32>);
+	impl S {
+		fn consume_self(self) {}
+	}
+
+	assert_eq!(check_and_reset(), false);
+	assert_no_alloc(|| {
+		let value = permit_alloc(|| S(do_alloc()));
+
+		permit_dealloc(|| {
+			value.consume_self();
+		});
+	});
+	assert_eq!(check_and_reset(), false);
+}
+
+#[test]
+fn test_permit_dealloc_alloc() {
+	assert_eq!(check_and_reset(), false);
+	assert_no_alloc(|| {
+		permit_dealloc(|| {
+			// this is not permitted
+			do_alloc();
+		});
+	});
+	assert_eq!(check_and_reset(), true);
 }
