@@ -35,6 +35,7 @@ compile_error!("disable_release cannot be active at the same time with warn_rele
 thread_local! {
 	static ALLOC_FORBID_COUNT: Cell<u32> = Cell::new(0);
 	static ALLOC_PERMIT_COUNT: Cell<u32> = Cell::new(0);
+	static DEALLOC_PERMIT_COUNT: Cell<u32> = Cell::new(0);
 	
 	#[cfg(any( all(feature="warn_debug", debug_assertions), all(feature="warn_release", not(debug_assertions)) ))]
 	static ALLOC_VIOLATION_COUNT: Cell<u32> = Cell::new(0);
@@ -92,7 +93,7 @@ pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 }
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
-/// Calls the `func` closure. Allocations are temporarily allowed, even if this
+/// Calls the `func` closure. (De-)Allocations are temporarily allowed, even if this
 /// code runs inside of assert_no_alloc.
 pub fn permit_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 	// RAII guard for managing the permit counter
@@ -106,6 +107,31 @@ pub fn permit_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 	impl Drop for Guard {
 		fn drop(&mut self) {
 			ALLOC_PERMIT_COUNT.with(|c| c.set(c.get()-1));
+		}
+	}
+	
+	let guard = Guard::new(); // increment the forbid counter
+	let ret = func();
+	std::mem::drop(guard);    // decrement the forbid counter
+
+	return ret;
+}
+
+#[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
+/// Calls the `func` closure. Deallocations are temporarily allowed, even if this
+/// code runs inside of assert_no_alloc.
+pub fn permit_dealloc<T, F: FnOnce() -> T> (func: F) -> T {
+	// RAII guard for managing the permit counter
+	struct Guard;
+	impl Guard {
+		fn new() -> Guard {
+			DEALLOC_PERMIT_COUNT.with(|c| c.set(c.get()+1));
+			Guard
+		}
+	}
+	impl Drop for Guard {
+		fn drop(&mut self) {
+			DEALLOC_PERMIT_COUNT.with(|c| c.set(c.get()-1));
 		}
 	}
 	
@@ -150,10 +176,12 @@ pub struct AllocDisabler;
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
 impl AllocDisabler {
-	fn check(&self, layout: Layout) {
+	fn check(&self, layout: Layout, is_dealloc: bool) {
 		let forbid_count = ALLOC_FORBID_COUNT.with(|f| f.get());
 		let permit_count = ALLOC_PERMIT_COUNT.with(|p| p.get());
-		if forbid_count > 0 && permit_count == 0 {
+		let dealloc_permit_count = DEALLOC_PERMIT_COUNT.with(|p| p.get());
+
+		if forbid_count > 0 && permit_count == 0 && (!is_dealloc || dealloc_permit_count == 0) {
 			#[cfg(any( all(feature="warn_debug", debug_assertions), all(feature="warn_release", not(debug_assertions)) ))] // if warn mode is selected
 			ALLOC_VIOLATION_COUNT.with(|c| c.set(c.get()+1));
 
@@ -178,12 +206,12 @@ impl AllocDisabler {
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
 unsafe impl GlobalAlloc for AllocDisabler {
 	unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-		self.check(layout);
+		self.check(layout, false);
 		System.alloc(layout)
 	}
 
 	unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-		self.check(layout);
+		self.check(layout, true);
 		System.dealloc(ptr, layout)
 	}
 }
